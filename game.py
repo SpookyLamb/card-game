@@ -1,6 +1,6 @@
-# Must Have
+# Must Have (DONE)
     # 1. Use OOP - have at least a deck class, a card class, and a player class (DONE)
-    # 2. Use PyTest - write at least two tests 
+    # 2. Use PyTest - write at least two tests (DONE)
     # 3. Shuffle the deck (DONE)
     # 4. Player selects how many decks to use (DONE)
     # 5. Deal the player and the dealer (computer) 1 card each (DONE)
@@ -121,6 +121,13 @@ class Player():
 
         return self.deck.draw()
 
+def test_names():
+    assert (name_cards(11) == "Jack")
+
+def test_compare():
+    card = Card(8, "Spade")
+    assert (compare_cards(card, card) == "TIE")
+
 def compare_cards(card1, card2):
     #takes two cards, returns the winning card or "TIE" if it's a tie
     
@@ -150,9 +157,6 @@ def compare_cards(card1, card2):
         else: #total tie
             return "TIE"
 
-def tests():
-    pass
-
 def invalid():
     print("Invalid input! Try again.")
 
@@ -175,6 +179,18 @@ def play_again():
     
     return False #fail safe, this should never fire
 
+def name_cards(card_value):
+    names = {
+        1: "Ace",
+        11: "Jack",
+        12: "Queen",
+        13: "King"
+    } #others are printed as is
+
+    if card_value in names:
+        return names[card_value]
+    else:
+        return card_value
 
 def select_game():
     #asks the player to select a game
@@ -214,13 +230,6 @@ def high_card():
     round_count = 0
     player_wins = 0
     dealer_wins = 0
-
-    names = {
-        1: "Ace",
-        11: "Jack",
-        12: "Queen",
-        13: "King"
-    } #others are printed as is
     
     while playing:
         #this loop covers the actual game
@@ -229,13 +238,20 @@ def high_card():
         print("ROUND ", round_count)
         input("Press enter when you're ready to reveal cards...")
 
+        print("")
+
         player_card = player.draw()
         dealer_card = dealer.draw()
 
-        print("Player's card: ", player_card.value, " ", player_card.suit)
-        print("Dealer's card: ", dealer_card.value, " ", dealer_card.suit)
+        val1 = name_cards(player_card.value)
+        val2 = name_cards(dealer_card.value)
+
+        print("Player's card: ", val1, " ", player_card.suit)
+        print("Dealer's card: ", val2, " ", dealer_card.suit)
 
         winner = compare_cards(player_card, dealer_card)
+
+        print("")
 
         if winner == player_card: #player win
             print("Player wins!")
@@ -244,10 +260,12 @@ def high_card():
             print("Dealer wins!")
             dealer_wins += 1
 
+        print("")
         print("Player win count: ", player_wins)
         print("Dealer win count: ", dealer_wins)
 
         #at the end of our loop, ask the player if they want to play again
+        print("")
         playing = play_again()
 
 high_card()
