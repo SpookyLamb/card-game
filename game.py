@@ -21,7 +21,7 @@
     # ● Player and dealer get 2 cards to start - player can only see one of the dealer cards
     # ● If dealer has less than 17 they have to take a card, over 17 they stop (dealer is automated)
     # ● Player goes first and can take as many cards as they want until they stop or they are over 21 (bust)
-    # 3. User selects game at start (BlackJack or High Card)
+    # 3. User selects game at start (BlackJack or High Card) (DONE)
 
 # Wish List
     # 1. War
@@ -115,6 +115,7 @@ class Deck():
 class Player():
     def __init__(self, deck) -> None:
         self.deck = deck
+        self.hand = [] #empty, used for blackjack and WAR
         self.bank = 1000 #$1000 to start!
     
     def get_deck(self):
@@ -128,6 +129,11 @@ class Player():
     
     def discard(self, card):
         self.deck.discarded(card)
+    
+    def discard_hand(self):
+
+        for card in self.hand:
+            self.discard(card)
 
 #tests
 
@@ -232,13 +238,47 @@ def name_cards(card_value):
     else:
         return card_value
 
-def name_format(card_value, card_suit):
+def name_format(card):
     #returns a string with a card's name formatted as "VALUE of SUIT"
-    return str(card_value) + " of " + str(card_suit) + "s"
+    return str(name_cards(card.value)) + " of " + str(card.suit) + "s"
 
 def select_game():
     #asks the player to select a game
-    pass
+    print("We have the following games available: ")
+    print("* HIGH CARD")
+    print("* BLACKJACK")
+
+    valid_input = False
+
+    while not valid_input:
+        player_input = input(f"What game would you like to play, {player_name}? ")
+        player_input = player_input.upper()
+
+        if player_input == "HIGH CARD" or player_input == "HIGHCARD":
+            valid_input = True
+            high_card()
+        elif player_input == "BLACKJACK" or player_input == "BLACK JACK":
+            valid_input = True
+            blackjack()
+        else:
+            invalid()
+
+def take_bet(player):
+    valid_input = False
+    bet = 0
+
+    while not valid_input:
+        bet = check_num(input(f"How much are you betting? (${player.bank} Available) "))
+
+        if bet > player.bank:
+            print("You don't have that kind of money! Try again.")
+        elif bet < 0:
+            print("You can't bet NEGATIVE money! Try again.")
+        else:
+            print(f"Betting ${bet}...")
+            valid_input = True
+    
+    return bet
 
 def high_card():
     #HIGH CARD - player and dealer both draw a card and compare them, either from the same deck or two distinct decks
@@ -288,34 +328,23 @@ def high_card():
         print("ROUND ", round_count)
 
         #take bets
-        valid_input = False
-
-        while not valid_input:
-            bet = check_num(input(f"How much are you betting? (${player.bank} Available) "))
-
-            if bet > player.bank:
-                print("You don't have that kind of money! Try again.")
-            elif bet < 0:
-                print("You can't bet NEGATIVE money! Try again.")
-            else:
-                print(f"Betting ${bet}...")
-                valid_input = True
+        bet = take_bet(player)
 
         #DRAW
         br()
 
         player_card = player.draw()
-        val1 = name_cards(player_card.value)
+        #val1 = name_cards(player_card.value)
         
         dealer_card = dealer.draw()
-        val2 = name_cards(dealer_card.value)
+        #val2 = name_cards(dealer_card.value)
 
         #give the player the chance to look at their card and fold to lose only half their bet, if they want
         valid_input = False
         folded = False
         
         while not valid_input:
-            player_input = input("Your card is: " + name_format(val1, player_card.suit) + ". Fold (Y/N)? ")
+            player_input = input("Your card is: " + name_format(player_card) + ". Fold (Y/N)? ")
             result = yes_or_no(player_input)
 
             if result == "inv":
@@ -337,7 +366,7 @@ def high_card():
             #input("Press enter when you're ready to reveal the dealer's card...")
             br()
             #print(f"{player_name}'s card: " + name_format(val1, player_card.suit))
-            print("Dealer's card: " + name_format(val2, dealer_card.suit))
+            print("Dealer's card: " + name_format(dealer_card))
 
             winner = compare_cards(player_card, dealer_card)
 
@@ -372,6 +401,201 @@ def high_card():
         br()
         playing = play_again()
 
-name_input()
+def blackjack():
+    #blacked jacked!
 
-high_card()
+    def blackjack_total(hand): #takes a hand (list of cards) and sums the values
+        #this is not so simple: all face cards (Jack, Queen, and King) count for 10
+        #and Aces (1s) count as either 11 OR 1 depending on the total
+        total = 0
+        aces = 0
+
+        for card in hand: #first total up all other cards
+            value = card.value
+            
+            if value > 10: #face cards
+                value = 10
+            elif value == 1: #aces
+                aces += 1
+                continue #skip, for now
+
+            total += value
+        
+        #now consider our aces
+        if aces > 0:
+            for i in range(aces):
+                if total + 11 > 21:
+                    total += 1 #count this ace as a 1
+                else:
+                    total += 11 #count this ace as an 11
+
+        return total
+
+    def blackjack_input(): #takes the player's input and returns a number denoting their action
+        #0 HIT
+        #1 STAY
+        #2 DOUBLE DOWN
+        #3 SPLIT
+
+        valid_input = False
+
+        while not valid_input:
+            player_input = input("Hit, or stay? ")
+            player_input = player_input.upper()
+
+            if player_input == "HIT" or player_input == "H":
+                valid_input = True
+                return 0 #hit
+            elif player_input == "STAY" or player_input == "S":
+                valid_input = True
+                return 1 #stay
+            else:
+                invalid()
+    
+    def print_hand(hand):
+        for card in hand:
+            print(name_format(card))
+    
+    def conclude_round(win, bet, total_winnings, p1_wins, p2_wins):
+        if win: #win
+            player.bank += 2 * bet
+            total_winnings += 2 * bet
+            print("You won!")
+        else: #loss
+            player.bank -= bet
+            total_winnings -= bet
+            print("You lost!")
+        
+        br()
+        print(f"{player_name} win count: ", p1_wins)
+        print("Dealer win count: ", p2_wins)
+        br()
+        print("Total winnings: ", "$" + str(total_winnings))
+        print("Bank: ", "$" + str(player.bank))
+
+        return total_winnings        
+
+    # Player goes first and can take as many cards as they want until they stop or they are over 21 (bust)
+
+    #init
+    player = Player(Deck())
+    dealer = Player(Deck())
+
+    def cleanup():
+        player.discard_hand()
+        dealer.discard_hand()
+
+        return play_again()
+
+    round_count = 0
+    player_wins = 0
+    dealer_wins = 0
+    total_winnings = 0
+
+    playing = True
+
+    #this loop covers the game
+    while playing:
+        round_count += 1
+
+        br()
+        print("ROUND ", round_count)
+
+        #take bets
+        bet = take_bet(player)
+
+        # Player and dealer get 2 cards to start
+        player.hand.append(player.draw())
+        player.hand.append(player.draw())
+
+        dealer.hand.append(dealer.draw())
+        dealer.hand.append(dealer.draw())
+
+        #player's turn
+
+        player_turn = True
+        bust = False
+
+        while player_turn:
+            print("Your cards: ")
+            print_hand(player.hand)
+            print("Your total: " + str(blackjack_total(player.hand)))
+
+            if blackjack_total(player.hand) > 21:
+                print("You've gone BUST!")
+                player_turn = False
+                bust = True
+                continue #skip the rest
+            
+            print("Dealer's Card: ")
+            print(name_format(dealer.hand[0])) #player can only see one of the dealer cards
+
+            choice = blackjack_input()
+
+            if choice == 0: #hit
+                player.hand.append(player.draw())
+            elif choice == 1: #stay
+                player_turn = False
+        
+        if bust: #instant player loss
+            dealer_wins += 1
+            total_winnings = conclude_round(False, bet, total_winnings, player_wins, dealer_wins)
+            playing = cleanup()
+            continue #skip the rest
+
+        #dealer's turn
+
+        dealer_turn = True
+        
+        while dealer_turn:
+            # If dealer has less than 17 they have to take a card, over 17 they stop (dealer is automated)
+            total = blackjack_total(dealer.hand)
+
+            if total < 17: #hit
+                dealer.hand.append(dealer.draw())
+            elif total > 21: #bust!
+                bust = True
+                dealer_turn = False
+            else: #stay
+                dealer_turn = False
+        
+        if bust: #instant player win
+            player_wins += 1
+            total_winnings = conclude_round(True, bet, total_winnings, player_wins, dealer_wins)
+            playing = cleanup()
+            continue #skip the rest
+
+        #once both players are done, print hands and compare totals
+        player_total = blackjack_total(player.hand)
+        dealer_total = blackjack_total(dealer.hand)
+
+        br()
+        print("Your cards: ")
+        print_hand(player.hand)
+        print("Your total: " + str(player_total))
+        br()
+
+        print("Dealer's cards: ")
+        print_hand(dealer.hand)
+        print("Dealer's total: " + str(dealer_total))
+        br()
+
+        if player_total > dealer_total: #player win
+            player_wins += 1
+            total_winnings = conclude_round(True, bet, total_winnings, player_wins, dealer_wins)
+        elif dealer_total > player_total: #player loss
+            dealer_wins += 1
+            total_winnings = conclude_round(False, bet, total_winnings, player_wins, dealer_wins)
+        else:
+            print("Standoff! Bets returned.")
+            br()
+            print(f"{player_name} win count: ", player_wins)
+            print("Dealer win count: ", dealer_wins)
+            br()
+            print("Total winnings: ", "$" + str(total_winnings))
+            print("Bank: ", "$" + str(player.bank))
+
+        playing = cleanup()
+
+name_input()
+select_game()
