@@ -34,6 +34,8 @@
 import random
 import math
 
+player_name = "Sin Nombre"
+
 class Card():
     def __init__(self, value, suit) -> None:
         # Cards have two values, their numbered value and their suit
@@ -163,6 +165,13 @@ def compare_cards(card1, card2):
 def invalid():
     print("Invalid input! Try again.")
 
+def name_input():
+    global player_name
+    new_name = input("Hello! What's your name? ")
+
+    if new_name: #keep "sin nombre" if the name field is empty
+        player_name = new_name
+
 def play_again():
     #returns true (play again) or false (don't)
     valid_input = False
@@ -249,7 +258,7 @@ def high_card():
         val1 = name_cards(player_card.value)
         val2 = name_cards(dealer_card.value)
 
-        print("Player's card: ", val1, " ", player_card.suit)
+        print(f"{player_name}'s card: ", val1, " ", player_card.suit)
         print("Dealer's card: ", val2, " ", dealer_card.suit)
 
         winner = compare_cards(player_card, dealer_card)
@@ -257,7 +266,7 @@ def high_card():
         print("")
 
         if winner == player_card: #player win
-            print("Player wins!")
+            print(f"{player_name} wins!")
             player_wins += 1
         else: #dealer win
             print("Dealer wins!")
@@ -268,11 +277,13 @@ def high_card():
         dealer.discard(dealer_card)
 
         print("")
-        print("Player win count: ", player_wins)
+        print(f"{player_name} win count: ", player_wins)
         print("Dealer win count: ", dealer_wins)
 
         #at the end of our loop, ask the player if they want to play again
         print("")
         playing = play_again()
+
+name_input()
 
 high_card()
