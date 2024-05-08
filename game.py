@@ -120,6 +120,9 @@ class Player():
             self.deck.shuffle(True)
 
         return self.deck.draw()
+    
+    def discard(self, card):
+        self.deck.discarded(card)
 
 def test_names():
     assert (name_cards(11) == "Jack")
@@ -259,6 +262,10 @@ def high_card():
         else: #dealer win
             print("Dealer wins!")
             dealer_wins += 1
+        
+        #discard cards
+        player.discard(player_card)
+        dealer.discard(dealer_card)
 
         print("")
         print("Player win count: ", player_wins)
