@@ -36,6 +36,8 @@ import math
 
 player_name = "Sin Nombre"
 
+#classes
+
 class Card():
     def __init__(self, value, suit) -> None:
         # Cards have two values, their numbered value and their suit
@@ -126,12 +128,28 @@ class Player():
     def discard(self, card):
         self.deck.discarded(card)
 
+#tests
+
 def test_names():
     assert (name_cards(11) == "Jack")
 
 def test_compare():
     card = Card(8, "Spade")
     assert (compare_cards(card, card) == "TIE")
+
+#functions
+
+def br():
+    print("")
+
+def check_num(inputty):
+    val = 0
+
+    try:
+        val = int(inputty)
+        return val
+    except:
+        return val #return 0 as a failure
 
 def compare_cards(card1, card2):
     #takes two cards, returns the winning card or "TIE" if it's a tie
@@ -216,9 +234,12 @@ def high_card():
     player = None
     dealer = None
 
+    br()
+    print("HIGH CARD - LOW CARD")
+    br()
+
     while not valid_input:
-        print("HIGH CARD - LOW CARD")
-        player_input = int(input("How many decks do you want to use (1 or 2)? "))
+        player_input = check_num(input("How many decks do you want to use (1 or 2)? "))
 
         if player_input == 1:
             valid_input = True
@@ -247,10 +268,10 @@ def high_card():
         #this loop covers the actual game
         round_count += 1
 
+        br()
         print("ROUND ", round_count)
         input("Press enter when you're ready to reveal cards...")
-
-        print("")
+        br()
 
         player_card = player.draw()
         dealer_card = dealer.draw()
@@ -258,12 +279,12 @@ def high_card():
         val1 = name_cards(player_card.value)
         val2 = name_cards(dealer_card.value)
 
-        print(f"{player_name}'s card: ", val1, " ", player_card.suit)
-        print("Dealer's card: ", val2, " ", dealer_card.suit)
+        print(f"{player_name}'s card: " + str(val1) + " of " + player_card.suit + "s")
+        print("Dealer's card: " + str(val2) + " of " + dealer_card.suit + "s")
 
         winner = compare_cards(player_card, dealer_card)
 
-        print("")
+        br()
 
         if winner == player_card: #player win
             print(f"{player_name} wins!")
@@ -276,12 +297,12 @@ def high_card():
         player.discard(player_card)
         dealer.discard(dealer_card)
 
-        print("")
+        br()
         print(f"{player_name} win count: ", player_wins)
         print("Dealer win count: ", dealer_wins)
 
         #at the end of our loop, ask the player if they want to play again
-        print("")
+        br()
         playing = play_again()
 
 name_input()
