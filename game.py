@@ -190,22 +190,31 @@ def name_input():
     if new_name: #keep "sin nombre" if the name field is empty
         player_name = new_name
 
+def yes_or_no(inpy):
+    #checks if an input is valid as yes or no
+    inpy = inpy.upper()
+
+    if inpy == "Y" or inpy == "YES":
+        return True
+    elif inpy == "N" or inpy == "NO":
+        return False
+    else:
+        invalid()
+        return "inv"
+
 def play_again():
     #returns true (play again) or false (don't)
     valid_input = False
 
     while not valid_input:
         player_input = input("Play again (Yes/No)? ")
-        player_input = player_input.upper()
+        result = yes_or_no(player_input)
 
-        if player_input == "Y" or player_input == "YES":
-            valid_input = True
-            return True
-        elif player_input == "N" or player_input == "NO":
-            valid_input = True
-            return False
+        if result == "inv":
+            continue #skip, try again
         else:
-            invalid()
+            valid_input = True
+            return result
     
     return False #fail safe, this should never fire
 
@@ -221,6 +230,10 @@ def name_cards(card_value):
         return names[card_value]
     else:
         return card_value
+
+def name_format(card_value, card_suit):
+    #returns a string with a card's name formatted as "VALUE of SUIT"
+    return str(card_value) + " of " + str(card_suit) + "s"
 
 def select_game():
     #asks the player to select a game
@@ -289,34 +302,59 @@ def high_card():
                 valid_input = True
 
         #DRAW
-        input("Press enter when you're ready to reveal cards...")
         br()
 
         player_card = player.draw()
-        dealer_card = dealer.draw()
-
         val1 = name_cards(player_card.value)
+        
+        dealer_card = dealer.draw()
         val2 = name_cards(dealer_card.value)
 
-        print(f"{player_name}'s card: " + str(val1) + " of " + player_card.suit + "s")
-        print("Dealer's card: " + str(val2) + " of " + dealer_card.suit + "s")
+        #give the player the chance to look at their card and fold to lose only half their bet, if they want
+        valid_input = False
+        folded = False
+        
+        while not valid_input:
+            player_input = input("Your card is: " + name_format(val1, player_card.suit) + ". Fold (Y/N)? ")
+            result = yes_or_no(player_input)
 
-        winner = compare_cards(player_card, dealer_card)
+            if result == "inv":
+                continue #try again
+            elif result: #folded
+                valid_input = True
+                folded = True
 
-        br()
+                loss = math.floor(bet / 2) #rounded down, because we're nice
+                bank -= loss
+                total_winnings -= loss
 
-        if winner == player_card: #player win
-            print(f"{player_name} wins!")
-            player_wins += 1
-            bank += 2 * bet
-            total_winnings += 2 * bet
-        elif winner == dealer_card: #dealer win
-            print("Dealer wins!")
-            dealer_wins += 1
-            bank -= bet
-            total_winnings -= bet
-        else: #tie
-            print("Tie!") #mulligan, don't do anything else
+                print("You folded (and lost HALF your bet)...") 
+            else: #proceed
+                valid_input = True
+                break
+
+        if not folded:
+            #input("Press enter when you're ready to reveal the dealer's card...")
+            br()
+            #print(f"{player_name}'s card: " + name_format(val1, player_card.suit))
+            print("Dealer's card: " + name_format(val2, dealer_card.suit))
+
+            winner = compare_cards(player_card, dealer_card)
+
+            br()
+
+            if winner == player_card: #player win
+                print(f"{player_name} wins!")
+                player_wins += 1
+                bank += 2 * bet
+                total_winnings += 2 * bet
+            elif winner == dealer_card: #dealer win
+                print("Dealer wins!")
+                dealer_wins += 1
+                bank -= bet
+                total_winnings -= bet
+            else: #tie
+                print("Tie!") #mulligan, don't do anything else
         
         #discard cards
         player.discard(player_card)
