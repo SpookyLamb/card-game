@@ -115,6 +115,7 @@ class Deck():
 class Player():
     def __init__(self, deck) -> None:
         self.deck = deck
+        self.bank = 1000 #$1000 to start!
     
     def get_deck(self):
         return self.deck
@@ -276,7 +277,6 @@ def high_card():
     round_count = 0
     player_wins = 0
     dealer_wins = 0
-    bank = 1000
     total_winnings = 0
     
     while playing:
@@ -291,9 +291,9 @@ def high_card():
         valid_input = False
 
         while not valid_input:
-            bet = check_num(input(f"How much are you betting? (${bank} Available) "))
+            bet = check_num(input(f"How much are you betting? (${player.bank} Available) "))
 
-            if bet > bank:
+            if bet > player.bank:
                 print("You don't have that kind of money! Try again.")
             elif bet < 0:
                 print("You can't bet NEGATIVE money! Try again.")
@@ -325,7 +325,7 @@ def high_card():
                 folded = True
 
                 loss = math.floor(bet / 2) #rounded down, because we're nice
-                bank -= loss
+                player.bank -= loss
                 total_winnings -= loss
 
                 print("You folded (and lost HALF your bet)...") 
@@ -346,12 +346,12 @@ def high_card():
             if winner == player_card: #player win
                 print(f"{player_name} wins!")
                 player_wins += 1
-                bank += 2 * bet
+                player.bank += 2 * bet
                 total_winnings += 2 * bet
             elif winner == dealer_card: #dealer win
                 print("Dealer wins!")
                 dealer_wins += 1
-                bank -= bet
+                player.bank -= bet
                 total_winnings -= bet
             else: #tie
                 print("Tie!") #mulligan, don't do anything else
@@ -366,6 +366,7 @@ def high_card():
         print("Dealer win count: ", dealer_wins)
         br()
         print("Total winnings: ", "$" + str(total_winnings))
+        print("Bank: ", "$" + str(player.bank))
 
         #at the end of our loop, ask the player if they want to play again
         br()
