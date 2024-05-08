@@ -7,13 +7,13 @@
     # 6. High card wins - suit breaks ties (DONE)
     # 7. Track number of wins (DONE)
 
-# Should Have
-    # 1. Input Player name
-    # 2. Handle betting:
-    # ● The player places a bet before they get their cards.
-    # ● If player loses then they lose their bet amount
-    # ● If player wins then they get double their bet amount
-    # ● Track how much the player has won/lost
+# Should Have (DONE)
+    # 1. Input Player name (DONE)
+    # 2. Handle betting: (DONE)
+    # ● The player places a bet before they get their cards. (DONE)
+    # ● If player loses then they lose their bet amount (DONE)
+    # ● If player wins then they get double their bet amount (DONE)
+    # ● Track how much the player has won/lost (DONE)
 
 # Could Have
     # 1. Multiple Players
@@ -263,13 +263,32 @@ def high_card():
     round_count = 0
     player_wins = 0
     dealer_wins = 0
+    bank = 1000
+    total_winnings = 0
     
     while playing:
         #this loop covers the actual game
         round_count += 1
 
+        #start round
         br()
         print("ROUND ", round_count)
+
+        #take bets
+        valid_input = False
+
+        while not valid_input:
+            bet = check_num(input(f"How much are you betting? (${bank} Available) "))
+
+            if bet > bank:
+                print("You don't have that kind of money! Try again.")
+            elif bet < 0:
+                print("You can't bet NEGATIVE money! Try again.")
+            else:
+                print(f"Betting ${bet}...")
+                valid_input = True
+
+        #DRAW
         input("Press enter when you're ready to reveal cards...")
         br()
 
@@ -289,17 +308,26 @@ def high_card():
         if winner == player_card: #player win
             print(f"{player_name} wins!")
             player_wins += 1
-        else: #dealer win
+            bank += 2 * bet
+            total_winnings += 2 * bet
+        elif winner == dealer_card: #dealer win
             print("Dealer wins!")
             dealer_wins += 1
+            bank -= bet
+            total_winnings -= bet
+        else: #tie
+            print("Tie!") #mulligan, don't do anything else
         
         #discard cards
         player.discard(player_card)
         dealer.discard(dealer_card)
 
+        #track wins
         br()
         print(f"{player_name} win count: ", player_wins)
         print("Dealer win count: ", dealer_wins)
+        br()
+        print("Total winnings: ", "$" + str(total_winnings))
 
         #at the end of our loop, ask the player if they want to play again
         br()
