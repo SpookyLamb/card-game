@@ -34,7 +34,7 @@
 import random
 import math
 
-player_name = "Sin Nombre"
+#player_name = "Sin Nombre"
 
 #classes
 
@@ -152,6 +152,7 @@ class Player():
         self.deck = deck
         self.hand = [] #empty, used for blackjack and WAR
         self.bank = 1000 #$1000 to start!
+        self.player_name = "Sin Nombre"
     
     def get_deck(self):
         return self.deck
@@ -170,6 +171,14 @@ class Player():
             self.discard(card)
         
         self.hand.clear() #clear the hand
+    
+    def name_input(self):
+        new_name = input("Hello! What's your name? ")
+
+        if new_name: #keep "sin nombre" if the name field is empty
+            self.player_name = new_name
+        
+        return self.player_name
 
 #tests
 
@@ -231,13 +240,6 @@ def compare_cards(card1, card2):
 def invalid():
     print("Invalid input! Try again.")
 
-def name_input():
-    global player_name
-    new_name = input("Hello! What's your name? ")
-
-    if new_name: #keep "sin nombre" if the name field is empty
-        player_name = new_name
-
 def yes_or_no(inpy):
     #checks if an input is valid as yes or no
     inpy = inpy.upper()
@@ -285,6 +287,9 @@ def name_format(card):
 
 def select_game():
     #asks the player to select a game
+    player = Player(Deck())
+    player_name = player.name_input()
+
     print("We have the following games available: ")
     print("* HIGH CARD")
     print("* BLACKJACK")
@@ -298,13 +303,13 @@ def select_game():
 
         if player_input == "HIGH CARD" or player_input == "HIGHCARD":
             valid_input = True
-            high_card()
+            high_card(player)
         elif player_input == "BLACKJACK" or player_input == "BLACK JACK":
             valid_input = True
-            blackjack()
+            blackjack(player)
         elif player_input == "WAR":
             valid_input = True
-            war()
+            war(player)
         else:
             invalid()
 
@@ -326,12 +331,12 @@ def take_bet(player):
     
     return bet
 
-def high_card():
+def high_card(player):
     #HIGH CARD - player and dealer both draw a card and compare them, either from the same deck or two distinct decks
     
     #init
+    player_name = player.player_name
     valid_input = False
-    player = None
     dealer = None
 
     br()
@@ -346,14 +351,13 @@ def high_card():
             print("Then you'll share with me...")
 
             deck = Deck()
-            player = Player(deck)
+            player.deck = deck
             dealer = Player(deck)
         
         elif player_input == 2:
             valid_input = True
             print("Then we'll use different decks.")
 
-            player = Player(Deck())
             dealer = Player(Deck())
 
         else: #throw, try again
@@ -447,8 +451,10 @@ def high_card():
         br()
         playing = play_again()
 
-def blackjack():
+def blackjack(player):
     #blacked jacked!
+
+    player_name = player.player_name
 
     def blackjack_total(hand): #takes a hand (list of cards) and sums the values
         #this is not so simple: all face cards (Jack, Queen, and King) count for 10
@@ -528,7 +534,6 @@ def blackjack():
     # Player goes first and can take as many cards as they want until they stop or they are over 21 (bust)
 
     #init
-    player = Player(Deck())
     dealer = Player(Deck())
 
     def cleanup():
@@ -694,7 +699,7 @@ def blackjack():
 
         playing = cleanup()
 
-def war():
+def war(player):
     # War
 
     def war_compare(card1, card2):
@@ -837,5 +842,4 @@ def war():
         deck.reset()
         playing = play_again()
 
-name_input()
 select_game()
