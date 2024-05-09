@@ -131,9 +131,10 @@ class Player():
         self.deck.discarded(card)
     
     def discard_hand(self):
-
         for card in self.hand:
             self.discard(card)
+        
+        self.hand.clear() #clear the hand
 
 #tests
 
@@ -276,6 +277,7 @@ def take_bet(player):
             print("You can't bet NEGATIVE money! Try again.")
         else:
             print(f"Betting ${bet}...")
+            br()
             valid_input = True
     
     return bet
@@ -435,12 +437,11 @@ def blackjack():
         #0 HIT
         #1 STAY
         #2 DOUBLE DOWN
-        #3 SPLIT
 
         valid_input = False
 
         while not valid_input:
-            player_input = input("Hit, or stay? ")
+            player_input = input("(H)it, (S)tay, or (D)ouble Down? ")
             player_input = player_input.upper()
 
             if player_input == "HIT" or player_input == "H":
@@ -449,8 +450,13 @@ def blackjack():
             elif player_input == "STAY" or player_input == "S":
                 valid_input = True
                 return 1 #stay
+            elif player_input == "DOUBLE" or player_input == "DOUBLE DOWN" or player_input == "D":
+                valid_input = True
+                return 2 #double
             else:
                 invalid()
+        
+        br()
     
     def print_hand(hand):
         for card in hand:
@@ -485,6 +491,9 @@ def blackjack():
         player.discard_hand()
         dealer.discard_hand()
 
+        player.deck.shuffle(True)
+        dealer.deck.shuffle(True) #reshuffle
+
         return play_again()
 
     round_count = 0
@@ -511,32 +520,76 @@ def blackjack():
         dealer.hand.append(dealer.draw())
         dealer.hand.append(dealer.draw())
 
+        print("Dealer's Card: ")
+        print(name_format(dealer.hand[0])) #player can only see one of the dealer cards
+        br()
+
+        print("Your cards: ")
+        print_hand(player.hand)
+        print("Your total: " + str(blackjack_total(player.hand)))
+        br()
+
         #player's turn
 
+        #offer them a chance to surrender or split first
+
+        valid_input = False
         player_turn = True
+        surrendered = False
         bust = False
 
-        while player_turn:
-            print("Your cards: ")
-            print_hand(player.hand)
-            print("Your total: " + str(blackjack_total(player.hand)))
+        while not valid_input:
+            inputty = input("Surrender this hand (and lose half your bet)? ")
+            result = yes_or_no(inputty)
 
-            if blackjack_total(player.hand) > 21:
-                print("You've gone BUST!")
+            if result == "inv":
+                continue
+
+            if result: #surrendered
+                valid_input = True
                 player_turn = False
-                bust = True
-                continue #skip the rest
-            
-            print("Dealer's Card: ")
-            print(name_format(dealer.hand[0])) #player can only see one of the dealer cards
+                surrendered = True
+            else:
+                valid_input = True
 
+        while player_turn:
             choice = blackjack_input()
 
             if choice == 0: #hit
                 player.hand.append(player.draw())
             elif choice == 1: #stay
                 player_turn = False
+            elif choice == 2: #double
+                player.hand.append(player.draw()) #one more draw
+                bet = bet * 2 #double bet
+                player_turn = False #end turn
+            
+            print("Your cards: ")
+            print_hand(player.hand)
+            print("Your total: " + str(blackjack_total(player.hand)))
+            br()
+
+            if blackjack_total(player.hand) > 21:
+                print("You've gone BUST!")
+                player_turn = False
+                bust = True
+                continue #skip the rest
         
+        if surrendered: #nobody wins, lose half your bet
+            player.bank -= bet // 2
+            total_winnings -= bet // 2
+
+            print("Surrendered! You lost half your bet...")
+            br()
+            print(f"{player_name} win count: ", player_wins)
+            print("Dealer win count: ", dealer_wins)
+            br()
+            print("Total winnings: ", "$" + str(total_winnings))
+            print("Bank: ", "$" + str(player.bank))
+
+            playing = cleanup()
+            continue #skip the rest
+
         if bust: #instant player loss
             dealer_wins += 1
             total_winnings = conclude_round(False, bet, total_winnings, player_wins, dealer_wins)
