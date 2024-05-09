@@ -15,21 +15,21 @@
     # ● If player wins then they get double their bet amount (DONE)
     # ● Track how much the player has won/lost (DONE)
 
-# Could Have
-    # 1. Multiple Players
-    # 2. BlackJack
-    # ● Player and dealer get 2 cards to start - player can only see one of the dealer cards
-    # ● If dealer has less than 17 they have to take a card, over 17 they stop (dealer is automated)
-    # ● Player goes first and can take as many cards as they want until they stop or they are over 21 (bust)
+# Could Have (DONE)
+    # 1. Multiple Players (IGNORED)
+    # 2. BlackJack (DONE)
+    # ● Player and dealer get 2 cards to start - player can only see one of the dealer cards (DONE)
+    # ● If dealer has less than 17 they have to take a card, over 17 they stop (dealer is automated) (DONE)
+    # ● Player goes first and can take as many cards as they want until they stop or they are over 21 (bust) (DONE)
     # 3. User selects game at start (BlackJack or High Card) (DONE)
 
-# Wish List
-    # 1. War
-    # ● Player and computer each get half the cards
-    # ● Each player turns over one card - high card wins (suit doesn’t matter)
-    # ● In case of tie, place 3 cards each and then high card wins
-    # ● Game plays until one player has all the cards
-    # ● Have the game auto play from start to finish, show all moves.
+# Wish List (DONE)
+    # 1. War (DONE)
+    # ● Player and computer each get half the cards (DONE)
+    # ● Each player turns over one card - high card wins (suit doesn’t matter) (DONE)
+    # ● In case of tie, place 3 cards each and then high card wins (MODIFIED - DONE)
+    # ● Game plays until one player has all the cards (DONE)
+    # ● Have the game auto play from start to finish, show all moves. (DONE)
 
 import random
 import math
@@ -82,12 +82,7 @@ class Deck():
         #takes a discarded card and adds it to the discard
         self.discard.append(card)
     
-    def __init__(self) -> None:
-        #sets a basic 52 card deck by filling an array with card classes  
-
-        self.deck = [] 
-        self.discard = [] #empty on ready, filled when a card is used
-
+    def fill_deck(self):
         #fill our cards with a nested loop
         for i in range(13):
             #add each of the basic 13 cards...
@@ -111,6 +106,46 @@ class Deck():
         
         #once we're done, shuffle the deck
         self.shuffle(self.deck)
+
+    def __init__(self) -> None:
+        #sets a basic 52 card deck by filling an array with card classes  
+
+        self.deck = [] 
+        self.discard = [] #empty on ready, filled when a card is used
+
+        self.fill_deck()
+
+class WarDeck(Deck):
+    def reset(self):
+        self.deck.clear()
+        self.fill_deck()
+
+        self.player_deck.clear()
+        self.dealer_deck.clear()
+
+        for i in range(26): #assign half the deck to the dealer
+            self.dealer_deck.append(self.deck.pop())
+
+        #assign the rest to the player
+        self.player_deck = self.player_deck + self.deck #append array
+
+    def war_shuffle(self):
+        random.shuffle(self.player_deck)
+        random.shuffle(self.dealer_deck)
+    
+    def draw(self, player):
+        #pops (removes) and returns the last element in the deck
+        if player:
+            return self.player_deck.pop()
+        else:
+            return self.dealer_deck.pop()
+
+    def __init__(self) -> None:
+        self.deck = []
+        self.discard = []
+        self.player_deck = []
+        self.dealer_deck = []
+        self.reset()
 
 class Player():
     def __init__(self, deck) -> None:
@@ -164,6 +199,11 @@ def compare_cards(card1, card2):
     
     value1 = card1.value
     value2 = card2.value
+
+    if value1 == 1:
+        value1 = 14 #aces high
+    if value2 == 1:
+        value2 = 14 #aces high
 
     if value1 > value2:
         return card1
@@ -248,6 +288,7 @@ def select_game():
     print("We have the following games available: ")
     print("* HIGH CARD")
     print("* BLACKJACK")
+    print("* WAR")
 
     valid_input = False
 
@@ -261,6 +302,9 @@ def select_game():
         elif player_input == "BLACKJACK" or player_input == "BLACK JACK":
             valid_input = True
             blackjack()
+        elif player_input == "WAR":
+            valid_input = True
+            war()
         else:
             invalid()
 
@@ -649,6 +693,149 @@ def blackjack():
             print("Bank: ", "$" + str(player.bank))
 
         playing = cleanup()
+
+def war():
+    # War
+
+    def war_compare(card1, card2):
+        #takes two cards, returns the winning card or "TIE" if it's a tie
+        
+        value1 = card1.value
+        value2 = card2.value
+
+        if value1 == 1:
+            value1 = 14 #aces high
+        if value2 == 1:
+            value2 = 14 #aces high
+
+        if value1 > value2:
+            return card1
+        elif value2 > value1:
+            return card2
+        else: #tie
+            return "TIE"
+    
+    def war_total(pool):
+        #totals up the values of the cards in the pool and returns it
+        sum = 0
+
+        for card in pool:
+            value = card.value
+
+            if value == 1: #aces high
+                value = 14
+            
+            sum += value
+        
+        return sum
+    
+    def print_pool(pool):
+        for card in pool:
+            print(name_format(card))
+
+    playing = True
+    # Player and computer each get half the cards
+    deck = WarDeck()
+
+    while playing:
+
+        warring = True
+        round_count = 0
+
+        while warring:
+            # Have the game auto play from start to finish, show all moves.
+
+            round_count += 1
+            pool = [] #winner gets this at the end of each round
+
+            br()
+            print(f"ROUND {round_count}")
+            br()
+
+            # Each player turns over one card - high card wins (suit doesn’t matter)
+            player_card = deck.draw(True)
+            dealer_card = deck.draw(False)
+
+            pool.append(player_card)
+            pool.append(dealer_card)
+
+            result = war_compare(player_card, dealer_card)
+
+            print("Your card is: " + name_format(player_card))
+            print("Dealer's card is: " + name_format(dealer_card))
+            br()
+
+            if result == "TIE": 
+                print("Draw! This means WAR!")
+                br()
+
+                # In case of tie, place 3 cards each and then the highest total wins - my house rules, bitch!
+                player_pool = [player_card]
+                dealer_pool = [dealer_card]
+
+                if len(deck.player_deck) >= 3:
+                    for i in range(3):
+                        player_pool.append(deck.draw(True))
+                else: #draw remaining cards - a losing battle...
+                    for i in range(len(deck.player_deck)):
+                        player_pool.append(deck.draw(True))
+                
+                if len(deck.dealer_deck) >= 3:
+                    for i in range(3):
+                        dealer_pool.append(deck.draw(False))
+                else: #draw remaining cards - a losing battle...
+                    for i in range(len(deck.dealer_deck)):
+                        dealer_pool.append(deck.draw(False))
+                
+                player_total = war_total(player_pool)
+                dealer_total = war_total(dealer_pool)
+
+                print("Your cards: ")
+                print_pool(player_pool)
+                br()
+                print(f"Your total power: {player_total}")
+                br()
+
+                print("Dealer's cards: ")
+                print_pool(dealer_pool)
+                br()
+                print(f"Dealer's total power: {dealer_total}")
+                br()
+
+                if player_total == dealer_total: #total tie, a rare result!
+                    print("Stalemate! All cards returned...")
+                    #return the pools
+                    deck.player_deck = deck.player_deck + player_pool
+                    deck.dealer_deck = deck.dealer_deck + dealer_pool
+                elif player_total > dealer_total: #player win
+                    print("You've won!")
+                    deck.player_deck = deck.player_deck + player_pool + dealer_pool
+                else: #dealer win
+                    print("The dealer has won...")
+                    deck.dealer_deck = deck.dealer_deck + player_pool + dealer_pool
+            
+            elif result == player_card: #player win
+                print("You've won!")
+                deck.player_deck = deck.player_deck + pool
+            else: #dealer win
+                print("The dealer has won...")
+                deck.dealer_deck = deck.dealer_deck + pool
+
+            # Game plays until one player has all the cards
+
+            if len(deck.player_deck) < 1: #player loss
+                print("The dealer has overwhelmed you, you've lost...")                
+                warring = False
+            elif len(deck.dealer_deck) < 1: #dealer loss
+                print("You have won a TOTAL VICTORY! Congratulations!")
+                warring = False
+            else: #shuffle and play another round
+                print("Your remaining cards: " + str(len(deck.player_deck)))
+                print("Dealer's remaining cards: " + str(len(deck.dealer_deck)))
+                deck.war_shuffle()
+
+        deck.reset()
+        playing = play_again()
 
 name_input()
 select_game()
